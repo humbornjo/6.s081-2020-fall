@@ -38,6 +38,20 @@ sys_wait(void)
   return wait(p);
 }
 
+// uint64
+// sys_sbrk(void)
+// {
+//   int addr;
+//   int n;
+
+//   if(argint(0, &n) < 0)
+//     return -1;
+//   addr = myproc()->sz;
+//   if(growproc(n) < 0)
+//     return -1;
+//   return addr;
+// }
+
 uint64
 sys_sbrk(void)
 {
@@ -47,8 +61,7 @@ sys_sbrk(void)
   if(argint(0, &n) < 0)
     return -1;
   addr = myproc()->sz;
-  if(growproc(n) < 0)
-    return -1;
+  myproc()->sz += n; 
   return addr;
 }
 
