@@ -51,6 +51,21 @@ usertrap(void)
   p->trapframe->epc = r_sepc();
   
   if(r_scause() == 8){
+
+    // //==================
+    // uint64 va = r_stval();
+    // va = PGROUNDDOWN(va);
+
+    // if (va>myproc()->sz) {
+    //   printf("usertrap(): reach unalloced memory\n");
+    //   p->killed = 1;
+    // }
+    // if (va<=myproc()->trapframe->sp) {
+    //   printf("usertrap(): reach unalloced memory\n");
+    //   p->killed = 1;
+    // }
+    // //==================
+
     // system call
 
     if(p->killed)
@@ -65,7 +80,32 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  } 
+  //==================
+  else if (r_scause() == 13 || r_scause() == 15) {
+    uint64 va = r_stval();
+    va = PGROUNDDOWN(va);
+    if (va >= myproc()->sz) {
+      printf("usertrap(): no man land fault\n");
+      p->killed = 1;
+    } else if (PGROUNDDOWN(va) <= p->trapframe->sp) {
+      printf("usertrap(): step into stack fault\n");
+      p->killed = 1;
+    } else {
+      char *mem;
+      mem = kalloc();
+      if(mem != 0){
+        memset(mem, 0, PGSIZE);
+        if(mappages(myproc()->pagetable, va, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != 0){
+          kfree(mem);
+        }
+      } else {
+        p->killed = 1;
+      }
+    }
+  }
+  //==================
+  else if((which_dev = devintr()) != 0){
     // ok
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);

@@ -75,6 +75,14 @@ sys_read(void)
 
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
     return -1;
+  
+  //=======================
+  if(lazyalloc(myproc()->pagetable, PGROUNDUP(p), p + (uint64) n) == -1) {
+    printf("lazyalloc fault\n");
+    return -1;
+  }
+  //=======================
+
   return fileread(f, p, n);
 }
 
@@ -87,6 +95,13 @@ sys_write(void)
 
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
     return -1;
+  
+  // =======================
+  if(lazyalloc(myproc()->pagetable, PGROUNDUP(p), p + (uint64) n) == -1) {
+    printf("lazyalloc fault\n");
+    return -1;
+  }
+  // =======================
 
   return filewrite(f, p, n);
 }
